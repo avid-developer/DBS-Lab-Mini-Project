@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Expense - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Add New Expense</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Expense Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Category</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="" selected disabled>Select a category</option>
+                                {% for category_id, category_name in categories %}
+                                <option value="{{ category_id }}">{{ category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount ($)</label>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="expense_date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="expense_date" name="expense_date" value="{{ now }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">Add Expense</button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Select the most appropriate category for your expense.</li>
+                        <li>If a suitable category doesn't exist, you can <a href="{{ url_for('manage_categories') }}">create a new one</a>.</li>
+                        <li>Budget alerts will appear if your expense exceeds any set limits.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

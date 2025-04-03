@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Expense Trends - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Expense Trends</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Time Period</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-8">
+                            <label for="months" class="form-label">Number of Months</label>
+                            <select class="form-select" id="months" name="months" onchange="this.form.submit()">
+                                <option value="3" {% if request.args.get('months', '6') == '3' %}selected{% endif %}>Last 3 Months</option>
+                                <option value="6" {% if request.args.get('months', '6') == '6' %}selected{% endif %}>Last 6 Months</option>
+                                <option value="12" {% if request.args.get('months') == '12' %}selected{% endif %}>Last 12 Months</option>
+                                <option value="24" {% if request.args.get('months') == '24' %}selected{% endif %}>Last 24 Months</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Report Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('monthly_report') }}" class="btn btn-info">Monthly Report</a>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trend Charts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Expense Trends Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Breakdown -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Category Breakdown by Month</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    {% for month in months %}
+                                    <th>{{ month }}</th>
+                                    {% endfor %}
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryTable">
+                                <!-- This will be filled by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get chart data directly from the server
+    const chartData = {{ chart_data|safe }};
+    
+    console.log("Chart data loaded:", chartData);
+    
+    // Create stacked bar chart for trends
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    // Generate random colors for each category
+    function generateColors(count) {
+        count = Math.max(1, count); // Ensure count is at least 1
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const hue = (i * 137) % 360; // Spread colors evenly
+            colors.push(`hsla(${hue}, 70%, 60%, 0.7)`);
+        }
+        return colors;
+    }
+
+    // Ensure we have datasets
+    if (!chartData.datasets) {
+        chartData.datasets = [];
+    }
+    
+    const backgroundColors = generateColors(chartData.datasets.length || 1);
+
+    // Apply colors to datasets
+    chartData.datasets.forEach((dataset, index) => {
+        const color = backgroundColors[index % backgroundColors.length]; // Use modulo to avoid out of bounds
+        dataset.backgroundColor = color;
+        dataset.borderColor = color.replace('0.7', '1');
+        dataset.borderWidth = 1;
+    });
+
+    // Create the chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Build the category table
+    const categoryTable = document.getElementById('categoryTable');
+    const categories = chartData.datasets.map(d => d.label);
+    const months = chartData.labels;
+
+    // Calculate totals for each category
+    const categoryTotals = {};
+    categories.forEach(category => {
+        categoryTotals[category] = 0;
+    });
+
+    chartData.datasets.forEach(dataset => {
+        const category = dataset.label;
+        dataset.data.forEach(value => {
+            categoryTotals[category] += Number(value || 0);
+        });
+    });
+
+    // Create table rows
+    categories.forEach(category => {
+        const row = document.createElement('tr');
+
+        // Add category name
+        const nameCell = document.createElement('td');
+        nameCell.textContent = category;
+        row.appendChild(nameCell);
+
+        // Add monthly values
+        const datasetIndex = chartData.datasets.findIndex(d => d.label === category);
+        if (datasetIndex >= 0) {
+            const dataset = chartData.datasets[datasetIndex];
+            dataset.data.forEach(value => {
+                const cell = document.createElement('td');
+                cell.textContent = '$' + Number(value || 0).toFixed(2);
+                row.appendChild(cell);
+            });
+        }
+
+        // Add total
+        const totalCell = document.createElement('td');
+        totalCell.textContent = '$' + categoryTotals[category].toFixed(2);
+        totalCell.style.fontWeight = 'bold';
+        row.appendChild(totalCell);
+
+        categoryTable.appendChild(row);
+    });
+
+    // Add a total row
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'table-primary';
+
+    const totalLabelCell = document.createElement('td');
+    totalLabelCell.textContent = 'Total';
+    totalLabelCell.style.fontWeight = 'bold';
+    totalRow.appendChild(totalLabelCell);
+
+    // Calculate monthly totals
+    const monthlyTotals = Array(months.length).fill(0);
+    chartData.datasets.forEach(dataset => {
+        dataset.data.forEach((value, index) => {
+            monthlyTotals[index] += Number(value || 0);
+        });
+    });
+
+    // Add monthly totals
+    let grandTotal = 0;
+    monthlyTotals.forEach(total => {
+        const cell = document.createElement('td');
+        cell.textContent = '$' + total.toFixed(2);
+        cell.style.fontWeight = 'bold';
+        totalRow.appendChild(cell);
+        grandTotal += total;
+    });
+
+    // Add grand total
+    const grandTotalCell = document.createElement('td');
+    grandTotalCell.textContent = '$' + grandTotal.toFixed(2);
+    grandTotalCell.style.fontWeight = 'bold';
+    totalRow.appendChild(grandTotalCell);
+
+    categoryTable.appendChild(totalRow);
+});
+</script>
+{% endblock %}

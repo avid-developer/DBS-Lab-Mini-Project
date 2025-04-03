@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget Limits - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Budget Limits</h1>
+    
+    <div class="row">
+        <!-- Add New Budget Limit -->
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Set New Budget Limit</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Category</label>
+                            <select class="form-select" id="category_id" name="category_id" required>
+                                <option value="overall">Overall Budget (All Categories)</option>
+                                {% for category_id, category_name in categories %}
+                                <option value="{{ category_id }}">{{ category_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="limit_amount" class="form-label">Amount Limit ($)</label>
+                            <input type="number" class="form-control" id="limit_amount" name="limit_amount" step="0.01" min="0.01" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="period" class="form-label">Period</label>
+                            <select class="form-select" id="period" name="period">
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="daily">Daily</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Set Budget Limit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- About Budget Limits -->
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">About Budget Limits</h5>
+                </div>
+                <div class="card-body">
+                    <p>Budget limits help you control your spending by sending alerts when expenses exceed your predefined limits.</p>
+                    <ul>
+                        <li><strong>Category-specific limits:</strong> Set spending limits for individual categories.</li>
+                        <li><strong>Overall limits:</strong> Set a total spending limit across all categories.</li>
+                        <li><strong>Multiple periods:</strong> Define limits on daily, weekly, or monthly basis.</li>
+                    </ul>
+                    <p class="mb-0 text-muted">When an expense causes you to exceed a limit, you'll receive an alert.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Existing Budget Limits -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Current Budget Limits</h5>
+                </div>
+                <div class="card-body">
+                    {% if limits %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Limit Amount</th>
+                                    <th>Period</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for limit in limits %}
+                                <tr>
+                                    <td>{% if limit[1] %}{{ limit[2] }}{% else %}Overall Budget{% endif %}</td>
+                                    <td>${{ limit[3]|float|round(2) }}</td>
+                                    <td>{{ limit[4]|capitalize }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('delete_budget', limit_id=limit[0]) }}">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this budget limit?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        You haven't set any budget limits yet. Use the form to create your first budget limit.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

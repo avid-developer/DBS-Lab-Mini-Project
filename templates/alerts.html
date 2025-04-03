@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget Alerts - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Budget Alerts</h1>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Budget Limit Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if alerts %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Limit</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in alerts %}
+                                <tr {% if alert[5] == 0 %}class="table-warning"{% endif %}>
+                                    <td>{{ alert[1].strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ alert[3] }}</td>
+                                    <td>${{ alert[2]|float|round(2) }}</td>
+                                    <td>${{ alert[4]|float|round(2) }}</td>
+                                    <td>
+                                        {% if alert[5] == 0 %}
+                                        <span class="badge bg-warning">New</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Read</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <p class="mb-0">You have no budget alerts. Great job staying within your budget!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">About Budget Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <p>Budget alerts are generated when your expenses exceed the limits you've set.</p>
+                    <ul>
+                        <li>Alerts can be for overall budget or specific category limits</li>
+                        <li>All alerts are automatically marked as read when you view this page</li>
+                        <li>You can adjust your budget limits on the <a href="{{ url_for('manage_budgets') }}">Budget Limits</a> page</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Budget Management Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Review your spending patterns regularly</li>
+                        <li>Adjust your budget limits if they're consistently too high or too low</li>
+                        <li>Consider setting limits for categories where you tend to overspend</li>
+                        <li>Check the <a href="{{ url_for('monthly_report') }}">Monthly Report</a> for detailed spending analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

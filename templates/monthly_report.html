@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Monthly Report - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Monthly Expense Report</h1>
+    
+    <!-- Month Selector -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Select Month</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="month" class="form-label">Month</label>
+                            <select class="form-select" id="month" name="month">
+                                {% for i in range(1, 13) %}
+                                <option value="{{ i }}" {% if i == month|int %}selected{% endif %}>
+                                    {{ i }} - {{ ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i-1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="year" class="form-label">Year</label>
+                            <select class="form-select" id="year" name="year">
+                                {% for i in range(2020, 2031) %}
+                                <option value="{{ i }}" {% if i == year|int %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">View Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Report Options</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('expense_trends') }}" class="btn btn-info">View Expense Trends</a>
+                        <a href="{{ url_for('add_expense') }}" class="btn btn-outline-primary">Add New Expense</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ month_name }} {{ year }} Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% if summary %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Total Amount</th>
+                                    <th>Transactions</th>
+                                    <th>Minimum</th>
+                                    <th>Maximum</th>
+                                    <th>Average</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in summary %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td>${{ item.total|float|round(2) }}</td>
+                                    <td>{{ item.count }}</td>
+                                    <td>{% if item.min %}${{ item.min|float|round(2) }}{% else %}-{% endif %}</td>
+                                    <td>{% if item.max %}${{ item.max|float|round(2) }}{% else %}-{% endif %}</td>
+                                    <td>{% if item.avg %}${{ item.avg|float|round(2) }}{% else %}-{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-primary">
+                                <tr>
+                                    <th>Total</th>
+                                    <th>${{ summary|map(attribute='total')|sum|round(2) }}</th>
+                                    <th>{{ summary|map(attribute='count')|sum }}</th>
+                                    <th colspan="3"></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No expenses recorded for {{ month_name }} {{ year }}. 
+                        <a href="{{ url_for('add_expense') }}">Add your first expense</a> to see it in the report.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Charts -->
+    {% if summary and summary|map(attribute='total')|sum > 0 %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Category Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryPieChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Spending by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryBarChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if summary and summary|map(attribute='total')|sum > 0 %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wrap Jinja expressions in quotes, then parse as JSON
+    const categories = JSON.parse('{{ summary|map(attribute="category")|list|tojson }}');
+    const amounts = JSON.parse('{{ summary|map(attribute="total")|list|tojson }}');
+    
+    // Create pie chart
+    const pieCtx = document.getElementById('categoryPieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: categories,
+            datasets: [{
+                data: amounts,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(199, 199, 199, 0.7)',
+                    'rgba(83, 102, 255, 0.7)',
+                    'rgba(40, 159, 64, 0.7)',
+                    'rgba(210, 199, 199, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.raw || 0;
+                            var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                            var percentage = Math.round((value / total) * 100);
+                            return label + ': $' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Create bar chart
+    const barCtx = document.getElementById('categoryBarChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: categories,
+            datasets: [{
+                label: 'Amount ($)',
+                data: amounts,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

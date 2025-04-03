@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4 mb-4">Expense Categories</h1>
+    
+    <div class="row">
+        <!-- Add New Category -->
+        <div class="col-md-5">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Add New Category</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="category_name" class="form-label">Category Name</label>
+                            <input type="text" class="form-control" id="category_name" name="category_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (optional)</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- About Categories -->
+        <div class="col-md-7">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">About Categories</h5>
+                </div>
+                <div class="card-body">
+                    <p>Categories help you organize your expenses and track spending patterns. Well-organized categories enable better financial management through:</p>
+                    <ul>
+                        <li><strong>Targeted budgeting:</strong> Set specific limits for different expense types</li>
+                        <li><strong>Expense analysis:</strong> Identify where your money is going</li>
+                        <li><strong>Financial reporting:</strong> Generate meaningful insights about your spending habits</li>
+                    </ul>
+                    <p class="mb-0 text-muted">You can create as many categories as you need to match your spending patterns.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Existing Categories -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Categories</h5>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ category[1] }}</td>
+                                    <td>{{ category[2] or 'No description' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        You don't have any expense categories yet. Use the form to create your first category.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
