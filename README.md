@@ -106,4 +106,4 @@ To modify the application:
 - Edit `app.py` to change application logic and routes
 - Modify templates in the `templates/` directory to change the user interface
 - Update `database.sql` if you need to change the database schema or PL/SQL procedures
-- Run `setup_database.py` again after making schema changes# DBS-Lab-Mini-Project
+- Run `setup_database.py` again after making schema changes
