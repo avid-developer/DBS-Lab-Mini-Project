@@ -29,8 +29,8 @@ A comprehensive personal expense tracking application with budget management, sp
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/expense-tracker.git
-cd expense-tracker
+git clone https://github.com/avid-developer/DBS-Lab-Mini-Project
+cd DBS-Lab-Mini-Project
 ```
 
 2. **Install Python dependencies**
